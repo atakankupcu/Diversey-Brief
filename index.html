@@ -458,18 +458,7 @@
     <p>Fill in all required fields and submit. Each submission is automatically logged to the shared sheet.</p>
   </div>
 
-  <!-- Setup Banner -->
-  <div class="setup-banner" id="setup-banner">
-    <span style="font-size:18px; flex-shrink:0;">⚙</span>
-    <div>
-      <strong>One-time setup required</strong>
-      Paste your Google Apps Script Web App URL below to enable automatic Google Sheets logging.
-      <div class="webhook-field">
-        <input type="text" id="webhook-url" placeholder="https://script.google.com/macros/s/YOUR_ID/exec" />
-        <button class="btn-save-hook" onclick="saveWebhook()">Save URL</button>
-      </div>
-    </div>
-  </div>
+
 
   <!-- 1. Project Info -->
   <div class="section">
@@ -613,7 +602,6 @@
 
   /* ─── Init ─── */
   document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
-  loadWebhook();
   addEnv();
   addScene(1);
 
@@ -735,21 +723,7 @@
   }
 
   /* ─── Webhook storage ─── */
-  function saveWebhook() {
-    const url = document.getElementById('webhook-url').value.trim();
-    if (!url) return;
-    localStorage.setItem('diversey_webhook', url);
-    showToast('Webhook URL saved');
-    document.getElementById('setup-banner').style.display = 'none';
-  }
-
-  function loadWebhook() {
-    const saved = localStorage.getItem('diversey_webhook');
-    if (saved) {
-      document.getElementById('webhook-url').value = saved;
-      document.getElementById('setup-banner').style.display = 'none';
-    }
-  }
+  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzznlWADuzwJylmaUhC_mt3v4EGyBu5ap2omgF0PLucoG52J7wRKw78W2IG8E1BkXY6/exec';
 
   /* ─── Collect form data ─── */
   function collectData() {
@@ -819,12 +793,7 @@
     const err = validate(data);
     if (err) { showToast('⚠ ' + err, true); return; }
 
-    const webhookUrl = localStorage.getItem('diversey_webhook');
-    if (!webhookUrl) {
-      showToast('⚠ No Google Sheets URL set. Please complete the setup above.', true);
-      document.getElementById('setup-banner').style.display = 'flex';
-      return;
-    }
+    const webhookUrl = WEBHOOK_URL;
 
     const btn = document.getElementById('submit-btn');
     btn.disabled = true;
