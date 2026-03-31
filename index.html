@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diversey — Production Brief</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:    #072635;
+    --blue:    #3366FF;
+    --teal:    #00CC99;
+    --orange:  #FE8B1E;
+    --bg:      #F2F4F7;
+    --surface: #FFFFFF;
+    --border:  #DDE2EA;
+    --text:    #0D1B26;
+    --muted:   #6B7A8D;
+    --danger:  #E24B4A;
+    --radius:  10px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--navy);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-mark {
+    width: 28px; height: 28px;
+    background: var(--teal);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .logo-mark svg { width: 16px; height: 16px; }
+
+  .logo-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.01em;
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.04em;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .status-pill {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--teal);
+    background: rgba(0,204,153,0.1);
+    border: 1px solid rgba(0,204,153,0.25);
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Layout ── */
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  .page-header {
+    margin-bottom: 2rem;
+  }
+
+  .page-header h1 {
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--navy);
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+
+  .page-header p {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* ── Section card ── */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: #FAFBFC;
+  }
+
+  .num {
+    width: 26px; height: 26px;
+    background: var(--navy);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .section-head h2 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--navy);
+    letter-spacing: -0.01em;
+  }
+
+  .section-body { padding: 1.5rem; }
+
+  /* ── Fields ── */
+  .field-grid { display: grid; gap: 14px; }
+  .col-2 { grid-template-columns: 1fr 1fr; }
+  .col-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+
+  label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .req { color: var(--danger); }
+
+  input[type="text"],
+  input[type="date"],
+  input[type="email"],
+  select,
+  textarea {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 11px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    appearance: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(51,102,255,0.1);
+  }
+
+  textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7A8D' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 11px center;
+    padding-right: 32px;
+  }
+
+  .hint { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* ── Divider ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 1.25rem 0;
+  }
+
+  /* ── Tags ── */
+  .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+
+  .tag {
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: #F7F8FA;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.12s;
+  }
+
+  .tag:hover { border-color: var(--blue); color: var(--blue); }
+  .tag.on { background: #EEF2FF; border-color: var(--blue); color: var(--blue); }
+
+  /* ── Environment block ── */
+  .env-block {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+
+  .env-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px;
+    background: #F7F8FA;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .env-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .env-badge {
+    font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+    color: var(--teal);
+    background: rgba(0,204,153,0.08);
+    border: 1px solid rgba(0,204,153,0.2);
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  .env-body { padding: 14px; }
+
+  /* ── Scene block ── */
+  .scene-block {
+    background: #F7F8FA;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    position: relative;
+  }
+
+  .scene-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .scene-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* ── Buttons ── */
+  .btn-ghost {
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    padding: 8px 0;
+    width: 100%;
+    border-radius: 7px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.12s;
+    margin-top: 6px;
+  }
+
+  .btn-ghost:hover { border-color: var(--blue); color: var(--blue); background: #EEF2FF; }
+
+  .btn-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1;
+    padding: 2px;
+    transition: color 0.12s;
+  }
+
+  .btn-remove:hover { color: var(--danger); }
+
+  /* ── Submit area ── */
+  .submit-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .submit-info { font-size: 13px; color: var(--muted); }
+  .submit-info strong { color: var(--text); }
+
+  .btn-submit {
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    padding: 10px 28px;
+    border-radius: 7px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-submit:hover { background: #0d3d52; }
+  .btn-submit:disabled { background: var(--muted); cursor: not-allowed; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    display: none;
+    z-index: 999;
+    border-left: 4px solid var(--teal);
+    animation: slideUp 0.2s ease;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Setup banner ── */
+  .setup-banner {
+    background: #FFF8EE;
+    border: 1px solid rgba(254,139,30,0.35);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 1.5rem;
+    font-size: 13px;
+    color: #7A4000;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .setup-banner strong { display: block; margin-bottom: 2px; font-weight: 600; }
+  .setup-banner code {
+    font-family: 'DM Mono', monospace;
+    background: rgba(0,0,0,0.06);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+  }
+
+  .webhook-field {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .webhook-field input {
+    flex: 1;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+  }
+
+  .btn-save-hook {
+    background: var(--orange);
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .col-2, .col-3 { grid-template-columns: 1fr; }
+    .submit-area { flex-direction: column; align-items: stretch; }
+    .btn-submit { text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 8C3 5.24 5.24 3 8 3s5 2.24 5 5-2.24 5-5 5-5-2.24-5-5z" stroke="#072635" stroke-width="1.5"/>
+        <path d="M8 6v4M6 8h4" stroke="#072635" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-name">Diversey</div>
+      <div class="logo-sub">A SOLENIS COMPANY</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="status-pill">PRODUCTION BRIEF</span>
+  </div>
+</header>
+
+<div class="page">
+  <div class="page-header">
+    <h1>Training Video Brief</h1>
+    <p>Fill in all required fields and submit. Each submission is automatically logged to the shared sheet.</p>
+  </div>
+
+  <!-- Setup Banner -->
+  <div class="setup-banner" id="setup-banner">
+    <span style="font-size:18px; flex-shrink:0;">⚙</span>
+    <div>
+      <strong>One-time setup required</strong>
+      Paste your Google Apps Script Web App URL below to enable automatic Google Sheets logging.
+      <div class="webhook-field">
+        <input type="text" id="webhook-url" placeholder="https://script.google.com/macros/s/YOUR_ID/exec" />
+        <button class="btn-save-hook" onclick="saveWebhook()">Save URL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. Project Info -->
+  <div class="section">
+    <div class="section-head">
+      <div class="num">1</div>
+      <h2>Project info</h2>
+    </div>
+    <div class="section-body">
+      <div class="field-grid col-2" style="margin-bottom:14px;">
+        <div class="field">
+          <label>Brief title <span class="req">*</span></label>
+          <input type="text" id="f-title" placeholder="e.g. Hotel Room Cleaning — Standard Procedure">
+        </div>
+        <div class="field">
+          <label>Client / region <span class="req">*</span></label>
+          <input type="text" id="f-client" placeholder="e.g. Diversey EMEA">
+        </div>
+      </div>
+      <div class="field-grid col-3">
+        <div class="field">
+          <label>Prepared by <span class="req">*</span></label>
+          <input type="text" id="f-author" placeholder="Name, department">
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" id="f-email" placeholder="name@company.com">
+        </div>
+        <div class="field">
+          <label>Date <span class="req">*</span></label>
+          <input type="date" id="f-date">
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="field">
+        <label>Objective / description</label>
+        <textarea id="f-objective" placeholder="What is this video series trying to teach? Who is the audience?"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Environments -->
+  <div class="section">
+    <div class="section-head">
+      <div class="num">2</div>
+      <h2>Environments & procedures</h2>
+    </div>
+    <div class="section-body">
+      <p class="hint" style="margin-bottom:14px;">Add one block per environment. Each environment has its own products, tools, and scenes.</p>
+      <div id="env-list"></div>
+      <button class="btn-ghost" onclick="addEnv()">+ Add environment</button>
+    </div>
+  </div>
+
+  <!-- 3. Characters & PPE -->
+  <div class="section">
+    <div class="section-head">
+      <div class="num">3</div>
+      <h2>Characters & PPE</h2>
+    </div>
+    <div class="section-body">
+      <div class="field-grid col-2" style="margin-bottom:14px;">
+        <div class="field">
+          <label>Character type <span class="req">*</span></label>
+          <select id="f-character">
+            <option value="">Select...</option>
+            <option>Housekeeping staff</option>
+            <option>Kitchen staff</option>
+            <option>Maintenance</option>
+            <option>F&B staff</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Uniform description</label>
+          <input type="text" id="f-uniform" placeholder="e.g. Blue polo shirt, dark trousers">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:14px;">
+        <label>PPE requirements <span class="req">*</span></label>
+        <div class="tag-row" id="ppe-tags">
+          <span class="tag" data-val="Nitrile gloves" onclick="toggleTag(this)">Nitrile gloves</span>
+          <span class="tag" data-val="Latex gloves" onclick="toggleTag(this)">Latex gloves</span>
+          <span class="tag" data-val="Rubber gloves" onclick="toggleTag(this)">Rubber gloves</span>
+          <span class="tag" data-val="Apron" onclick="toggleTag(this)">Apron</span>
+          <span class="tag" data-val="Face mask" onclick="toggleTag(this)">Face mask</span>
+          <span class="tag" data-val="Safety goggles" onclick="toggleTag(this)">Safety goggles</span>
+          <span class="tag" data-val="None required" onclick="toggleTag(this)">None required</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>PPE notes</label>
+        <input type="text" id="f-ppe-notes" placeholder="e.g. Gloves must be changed between rooms">
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Notes -->
+  <div class="section">
+    <div class="section-head">
+      <div class="num">4</div>
+      <h2>Notes & constraints</h2>
+    </div>
+    <div class="section-body">
+      <div class="field-grid" style="gap:14px;">
+        <div class="field">
+          <label>Visual / brand guidelines</label>
+          <textarea id="f-brand" placeholder="Any specific visual requirements, logo placement, color restrictions..."></textarea>
+        </div>
+        <div class="field">
+          <label>What NOT to show</label>
+          <textarea id="f-donts" placeholder="Actions, products, or situations that must be avoided in the video"></textarea>
+        </div>
+        <div class="field">
+          <label>Additional notes</label>
+          <textarea id="f-notes" placeholder="Anything else the production team should know"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submit -->
+  <div class="submit-area">
+    <div class="submit-info">
+      <strong>Ready to submit?</strong><br>
+      Your brief will be saved to the shared Google Sheet automatically.
+    </div>
+    <button class="btn-submit" id="submit-btn" onclick="submitForm()">Submit Brief</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  /* ─── State ─── */
+  let envCount = 0;
+  let sceneCounts = {};
+
+  const TOOLS = ['Spray bottle','Mop','Bucket','Squeegee','Scrub brush','Trolley','Vacuum','Microfiber cloth'];
+  const CLOTHS = ['Red cloth','Blue cloth','Green cloth','Yellow cloth','White cloth'];
+  const LOCATIONS = ['Hotel room','Bathroom','Kitchen','Lobby','Corridor','Restaurant','Pool area','Public toilet','Conference room','Other'];
+
+  /* ─── Init ─── */
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  loadWebhook();
+  addEnv();
+  addScene(1);
+
+  /* ─── Tags ─── */
+  function toggleTag(el) { el.classList.toggle('on'); }
+
+  function getSelectedTags(containerId) {
+    return [...document.querySelectorAll(`#${containerId} .tag.on`)].map(t => t.dataset.val).join(', ');
+  }
+
+  /* ─── Environments ─── */
+  function addEnv() {
+    envCount++;
+    const id = envCount;
+    sceneCounts[id] = 0;
+
+    const div = document.createElement('div');
+    div.className = 'env-block';
+    div.id = 'env-' + id;
+
+    const toolTags = TOOLS.map(t => `<span class="tag" data-val="${t}" onclick="toggleTag(this)">${t}</span>`).join('');
+    const clothTags = CLOTHS.map(c => `<span class="tag" data-val="${c}" onclick="toggleTag(this)">${c}</span>`).join('');
+    const locationOpts = LOCATIONS.map(l => `<option>${l}</option>`).join('');
+
+    div.innerHTML = `
+      <div class="env-head">
+        <div class="env-title">
+          <span class="env-badge">ENV ${String(id).padStart(2,'0')}</span>
+          <span id="env-name-${id}">New environment</span>
+        </div>
+        ${id > 1 ? `<button class="btn-remove" onclick="removeEnv(${id})" title="Remove">✕</button>` : ''}
+      </div>
+      <div class="env-body">
+        <div class="field-grid col-2" style="margin-bottom:14px;">
+          <div class="field">
+            <label>Location type <span class="req">*</span></label>
+            <select id="env-loc-${id}" onchange="updateEnvName(${id})">
+              <option value="">Select...</option>
+              ${locationOpts}
+            </select>
+          </div>
+          <div class="field">
+            <label>Location description</label>
+            <input type="text" id="env-desc-${id}" placeholder="e.g. 4-star hotel standard bathroom">
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:14px;">
+          <label>Products used <span class="req">*</span></label>
+          <textarea id="env-products-${id}" rows="2" placeholder="Product name — dilution ratio — application method&#10;e.g. Taski Sani 4in1 — 1:50 — spray and wipe"></textarea>
+        </div>
+        <div class="field-grid col-2" style="margin-bottom:14px;">
+          <div class="field">
+            <label>Tools & equipment</label>
+            <div class="tag-row" id="env-tools-${id}">${toolTags}</div>
+          </div>
+          <div class="field">
+            <label>Cloth colors</label>
+            <div class="tag-row" id="env-cloths-${id}">${clothTags}</div>
+            <p class="hint">Specify per scene which color is used on which surface.</p>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="field">
+          <label style="font-size:12px; font-weight:600; color:var(--navy); text-transform:none; letter-spacing:0; margin-bottom:8px; display:block;">Scenes</label>
+          <div id="scenes-${id}"></div>
+          <button class="btn-ghost" onclick="addScene(${id})">+ Add scene</button>
+        </div>
+      </div>`;
+
+    document.getElementById('env-list').appendChild(div);
+  }
+
+  function removeEnv(id) {
+    document.getElementById('env-' + id)?.remove();
+  }
+
+  function updateEnvName(id) {
+    const val = document.getElementById('env-loc-' + id)?.value;
+    if (val) document.getElementById('env-name-' + id).textContent = val;
+  }
+
+  /* ─── Scenes ─── */
+  function addScene(envId) {
+    sceneCounts[envId] = (sceneCounts[envId] || 0) + 1;
+    const sc = sceneCounts[envId];
+    const container = document.getElementById('scenes-' + envId);
+
+    const div = document.createElement('div');
+    div.className = 'scene-block';
+    div.id = `sc-${envId}-${sc}`;
+
+    div.innerHTML = `
+      <div class="scene-head">
+        <span class="scene-label">Scene ${sc}</span>
+        ${sc > 1 ? `<button class="btn-remove" onclick="document.getElementById('sc-${envId}-${sc}').remove()">✕</button>` : ''}
+      </div>
+      <div class="field-grid" style="gap:10px;">
+        <div class="field">
+          <label>Action / step description <span class="req">*</span></label>
+          <input type="text" placeholder="e.g. Apply disinfectant to toilet bowl interior and under rim">
+        </div>
+        <div class="field-grid col-2">
+          <div class="field">
+            <label>Product in this scene</label>
+            <input type="text" placeholder="e.g. Taski Sani 4in1">
+          </div>
+          <div class="field">
+            <label>Tool / cloth color</label>
+            <input type="text" placeholder="e.g. Red cloth, toilet brush">
+          </div>
+        </div>
+        <div class="field">
+          <label>Special notes / warnings</label>
+          <input type="text" placeholder="e.g. Must show 30-second contact time">
+        </div>
+      </div>`;
+
+    container.appendChild(div);
+  }
+
+  /* ─── Webhook storage ─── */
+  function saveWebhook() {
+    const url = document.getElementById('webhook-url').value.trim();
+    if (!url) return;
+    localStorage.setItem('diversey_webhook', url);
+    showToast('Webhook URL saved');
+    document.getElementById('setup-banner').style.display = 'none';
+  }
+
+  function loadWebhook() {
+    const saved = localStorage.getItem('diversey_webhook');
+    if (saved) {
+      document.getElementById('webhook-url').value = saved;
+      document.getElementById('setup-banner').style.display = 'none';
+    }
+  }
+
+  /* ─── Collect form data ─── */
+  function collectData() {
+    const environments = [];
+    document.querySelectorAll('[id^="env-loc-"]').forEach(el => {
+      const id = el.id.replace('env-loc-', '');
+      if (!document.getElementById('env-' + id)) return;
+
+      const scenes = [];
+      document.querySelectorAll(`#scenes-${id} .scene-block`).forEach(sb => {
+        const inputs = sb.querySelectorAll('input[type="text"]');
+        scenes.push({
+          action: inputs[0]?.value || '',
+          product: inputs[1]?.value || '',
+          tool: inputs[2]?.value || '',
+          notes: inputs[3]?.value || '',
+        });
+      });
+
+      environments.push({
+        location: el.value,
+        description: document.getElementById('env-desc-' + id)?.value || '',
+        products: document.getElementById('env-products-' + id)?.value || '',
+        tools: getSelectedTags('env-tools-' + id),
+        cloths: getSelectedTags('env-cloths-' + id),
+        scenes,
+      });
+    });
+
+    return {
+      timestamp: new Date().toISOString(),
+      title: document.getElementById('f-title').value,
+      client: document.getElementById('f-client').value,
+      author: document.getElementById('f-author').value,
+      email: document.getElementById('f-email').value,
+      date: document.getElementById('f-date').value,
+      objective: document.getElementById('f-objective').value,
+      environments,
+      character: document.getElementById('f-character').value,
+      uniform: document.getElementById('f-uniform').value,
+      ppe: getSelectedTags('ppe-tags'),
+      ppeNotes: document.getElementById('f-ppe-notes').value,
+      brandGuidelines: document.getElementById('f-brand').value,
+      donts: document.getElementById('f-donts').value,
+      notes: document.getElementById('f-notes').value,
+    };
+  }
+
+  /* ─── Validate ─── */
+  function validate(data) {
+    if (!data.title) return 'Brief title is required.';
+    if (!data.client) return 'Client / region is required.';
+    if (!data.author) return 'Prepared by is required.';
+    if (!data.date) return 'Date is required.';
+    if (!data.character) return 'Character type is required.';
+    if (!data.ppe) return 'Please select at least one PPE option.';
+    for (const env of data.environments) {
+      if (!env.location) return 'Please select a location type for all environments.';
+      if (!env.products) return 'Please fill in products for all environments.';
+    }
+    return null;
+  }
+
+  /* ─── Submit ─── */
+  async function submitForm() {
+    const data = collectData();
+    const err = validate(data);
+    if (err) { showToast('⚠ ' + err, true); return; }
+
+    const webhookUrl = localStorage.getItem('diversey_webhook');
+    if (!webhookUrl) {
+      showToast('⚠ No Google Sheets URL set. Please complete the setup above.', true);
+      document.getElementById('setup-banner').style.display = 'flex';
+      return;
+    }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting…';
+
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      showToast('Brief submitted successfully');
+      btn.textContent = 'Submitted ✓';
+    } catch (e) {
+      showToast('Submission failed — check your URL', true);
+      btn.disabled = false;
+      btn.textContent = 'Submit Brief';
+    }
+  }
+
+  /* ─── Toast ─── */
+  function showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.borderLeftColor = isError ? '#E24B4A' : 'var(--teal)';
+    t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 3500);
+  }
+</script>
+</body>
+</html>
