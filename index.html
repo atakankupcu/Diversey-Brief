@@ -467,6 +467,20 @@
       <h2>Project info</h2>
     </div>
     <div class="section-body">
+      <div class="field" style="margin-bottom:14px;">
+        <label>Industry sector <span class="req">*</span></label>
+        <select id="f-sector" onchange="updateLocationOptions()">
+          <option value="">Select sector...</option>
+          <option value="Hospitality">Hospitality (Hotels & Resorts)</option>
+          <option value="Food Service">Food Service (Restaurants & Catering)</option>
+          <option value="Healthcare">Healthcare (Hospitals & Clinics)</option>
+          <option value="Food & Beverage Manufacturing">Food & Beverage Manufacturing</option>
+          <option value="Retail & Grocery">Retail & Grocery</option>
+          <option value="Facility Management">Facility Management</option>
+          <option value="Education">Education (Schools & Universities)</option>
+          <option value="Laundry">Laundry & Textile Care</option>
+        </select>
+      </div>
       <div class="field-grid col-2" style="margin-bottom:14px;">
         <div class="field">
           <label>Brief title <span class="req">*</span></label>
@@ -581,9 +595,74 @@
   let envCount = 0;
   let sceneCounts = {};
 
-  const TOOLS = ['Spray bottle','Mop','Bucket','Squeegee','Scrub brush','Trolley','Vacuum','Microfiber cloth'];
-  const CLOTHS = ['Red cloth','Blue cloth','Green cloth','Yellow cloth','White cloth'];
-  const LOCATIONS = ['Hotel room','Bathroom','Kitchen','Lobby','Corridor','Restaurant','Pool area','Public toilet','Conference room','Other'];
+  const TOOLS = [
+    'Microfiber cloth',
+    'Microfiber mop',
+    'Flat mop',
+    'String mop',
+    'Spray bottle',
+    'Trigger spray bottle',
+    'Bucket',
+    'Double bucket & wringer',
+    'Squeegee',
+    'Floor scrubber',
+    'Scrub brush',
+    'Toilet brush',
+    'Trolley',
+    'Vacuum cleaner',
+    'Steam cleaner',
+    'Sponge',
+    'Scrub pad',
+    'Window washer',
+    'Other',
+  ];
+
+  const SECTOR_LOCATIONS = {
+    'Hospitality': ['Hotel room','Bathroom','Lobby','Corridor','Restaurant','Conference room','Pool area','Fitness center','Spa','Public toilet','Elevator','Reception','Back of house','Laundry room','Other'],
+    'Food Service': ['Kitchen','Food prep area','Dining area','Bar','Servery','Cold storage','Dishwashing area','Staff toilet','Delivery area','Other'],
+    'Healthcare': ['Patient room','Operating theater','ICU','Waiting area','Corridor','Bathroom','Reception','Laboratory','Pharmacy','Staff room','Other'],
+    'Food & Beverage Manufacturing': ['Production floor','Packaging hall','Cold storage','CIP room','Loading dock','Staff facilities','Drainage area','Other'],
+    'Retail & Grocery': ['Sales floor','Checkout area','Storage room','Staff room','Public toilet','Entrance','Refrigerated section','Other'],
+    'Facility Management': ['Office','Common area','Corridor','Restroom','Elevator','Reception','Car park','Outdoor area','Other'],
+    'Education': ['Classroom','Cafeteria','Corridor','Restroom','Gym','Laboratory','Library','Staff room','Other'],
+    'Laundry': ['Washing area','Drying area','Folding area','Storage','Staff room','Other'],
+  };
+
+  const SURFACE_OPTIONS = {
+    'Hotel room': ['Bed frame','Nightstand','Desk','Chair','Wardrobe','Mirror','Floor','Window','Minibar','TV unit','Coffee table','Door handle','Light switch'],
+    'Bathroom': ['Toilet bowl','Toilet seat','Toilet exterior','Sink','Tap','Mirror','Bathtub','Shower cabin','Shower head','Tile wall','Tile floor','Drain','Towel rail'],
+    'Kitchen': ['Countertop','Sink','Tap','Hob','Oven','Grill','Fryer','Refrigerator','Freezer','Cutting board','Tile wall','Floor','Drain','Hood'],
+    'Lobby': ['Floor','Reception desk','Seating area','Glass door','Elevator button','Handrail','Luggage area','Artwork/display'],
+    'Corridor': ['Floor','Wall','Handrail','Door handle','Light switch','Elevator button','Skirting board'],
+    'Restaurant': ['Dining table','Chair','Menu holder','Bar counter','Floor','Window','Service station','High chair'],
+    'Pool area': ['Pool surround','Lounger','Changing room floor','Shower','Toilet','Glass surface','Handrail'],
+    'Conference room': ['Table','Chair','Whiteboard','Projector screen','Floor','Window','Door handle'],
+    'Food prep area': ['Worktop','Chopping board','Sink','Equipment exterior','Floor','Wall tile','Drain'],
+    'Patient room': ['Bed rail','Overbed table','IV stand','Floor','Bathroom','Door handle','Light switch','Call button'],
+  };
+
+  function updateLocationOptions() {
+    const sector = document.getElementById('f-sector').value;
+    const locations = SECTOR_LOCATIONS[sector] || Object.values(SECTOR_LOCATIONS).flat().filter((v,i,a)=>a.indexOf(v)===i).sort();
+    document.querySelectorAll('[id^="env-loc-"]').forEach(sel => {
+      const current = sel.value;
+      sel.innerHTML = '<option value="">Select...</option>' + locations.map(l => `<option${l===current?' selected':''}>${l}</option>`).join('');
+      
+    });
+  }
+
+  function updateSurfaceOptions(envId) {
+    if (!envId) return;
+    const locSel = document.getElementById('env-loc-' + envId);
+    if (!locSel) return;
+    const loc = locSel.value;
+    const surfaces = SURFACE_OPTIONS[loc] || [];
+    document.querySelectorAll(`#scenes-${envId} .scene-surface`).forEach(sel => {
+      const current = sel.value;
+      const otherOpt = '<option value="Other (type below)">Other (type below)</option>';
+      sel.innerHTML = '<option value="">Select surface...</option>' + surfaces.map(s=>`<option${s===current?' selected':''}>${s}</option>`).join('') + otherOpt;
+    });
+  }
 
   /* ─── Init ─── */
   document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
@@ -607,7 +686,9 @@
     div.className = 'env-block';
     div.id = 'env-' + id;
 
-    const locationOpts = LOCATIONS.map(l => `<option>${l}</option>`).join('');
+    const sector = document.getElementById('f-sector')?.value || '';
+    const locations = SECTOR_LOCATIONS[sector] || ['Hotel room','Bathroom','Kitchen','Lobby','Corridor','Restaurant','Other'];
+    const locationOpts = locations.map(l => `<option>${l}</option>`).join('');
 
     div.innerHTML = `
       <div class="env-head">
@@ -661,29 +742,51 @@
     div.className = 'scene-block';
     div.id = `sc-${envId}-${sc}`;
 
+    const sceneId = `sc-${envId}-${sc}`;
+    const toolOpts = TOOLS.map(t => `<option value="${t}">${t}</option>`).join('');
+
     div.innerHTML = `
       <div class="scene-head">
         <span class="scene-label">Scene ${sc}</span>
-        ${sc > 1 ? `<button class="btn-remove" onclick="document.getElementById('sc-${envId}-${sc}').remove()">✕</button>` : ''}
+        ${sc > 1 ? `<button class="btn-remove" onclick="document.getElementById('${sceneId}').remove()">✕</button>` : ''}
       </div>
       <div class="field-grid" style="gap:10px;">
-        <div class="field">
-          <label>Action / step description <span class="req">*</span></label>
-          <input type="text" placeholder="e.g. Apply disinfectant to toilet bowl interior and under rim">
+        <div class="field-grid col-2">
+          <div class="field">
+            <label>Action / step description <span class="req">*</span></label>
+            <input type="text" class="scene-action" placeholder="e.g. Apply disinfectant to toilet bowl interior">
+          </div>
+          <div class="field">
+            <label>Surface / area</label>
+            <input type="text" class="scene-surface" placeholder="e.g. Toilet bowl, countertop, mirror">
+          </div>
         </div>
-        <div class="field-grid col-3">
+        <div class="field-grid col-2">
           <div class="field">
             <label>Product</label>
-            <input type="text" placeholder="e.g. Taski Sani 4in1">
+            <input type="text" class="scene-product" placeholder="e.g. Taski Sani 4in1">
           </div>
           <div class="field">
-            <label>Tool</label>
-            <input type="text" placeholder="e.g. Spray bottle, mop">
+            <label>Product SKU</label>
+            <input type="text" class="scene-sku" placeholder="Optional">
           </div>
-          <div class="field">
-            <label>Cloth color</label>
-            <input type="text" placeholder="e.g. Red cloth">
+        </div>
+        <div class="field">
+          <label>Tools</label>
+          <div class="scene-tools-list" style="display:flex;flex-direction:column;gap:6px;">
+            <div class="tool-row" style="display:flex;gap:8px;align-items:center;">
+              <select class="scene-tool-item" onchange="handleToolChange(this)" style="flex:1;">
+                <option value="">Select tool...</option>
+                ${toolOpts}
+              </select>
+              <select class="scene-cloth-item" style="display:none;flex:1;">
+                <option value="">Cloth color...</option>
+                <option value="Red">Red</option>
+                <option value="Blue">Blue</option>
+              </select>
+            </div>
           </div>
+          <button type="button" class="btn-ghost" style="margin-top:6px;padding:5px 0;font-size:12px;" onclick="addToolRow(this)">+ Add another tool</button>
         </div>
         <div class="field-grid col-2">
           <div class="field">
@@ -698,7 +801,23 @@
           </div>
           <div class="field">
             <label>Special notes / warnings</label>
-            <input type="text" placeholder="e.g. 30-second contact time">
+            <input type="text" class="scene-notes" placeholder="e.g. 30-second contact time required">
+          </div>
+        </div>
+        <div class="field-grid col-2">
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" class="scene-dispenser-cb" onchange="toggleDispenser(this)" style="width:15px;height:15px;margin:0;cursor:pointer;">
+              Dispenser used?
+            </label>
+            <input type="text" class="scene-dispenser" placeholder="Dispenser type..." style="margin-top:6px; display:none;">
+          </div>
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+              <input type="checkbox" class="scene-dilution-cb" onchange="toggleDilution(this)" style="width:15px;height:15px;margin:0;cursor:pointer;">
+              Dilution required?
+            </label>
+            <input type="text" class="scene-dilution" placeholder="e.g. 1:50 with water" style="margin-top:6px; display:none;">
           </div>
         </div>
       </div>`;
@@ -706,8 +825,48 @@
     container.appendChild(div);
   }
 
+  /* ─── Scene helpers ─── */
+  function toggleDispenser(cb) {
+    const input = cb.closest('.field').querySelector('.scene-dispenser');
+    if (input) input.style.display = cb.checked ? 'block' : 'none';
+  }
+
+  function toggleDilution(cb) {
+    const input = cb.closest('.field').querySelector('.scene-dilution');
+    if (input) input.style.display = cb.checked ? 'block' : 'none';
+  }
+
+  function handleToolChange(sel) {
+    const row = sel.closest('.tool-row');
+    const clothSel = row.querySelector('.scene-cloth-item');
+    if (clothSel) {
+      clothSel.style.display = sel.value === 'Microfiber cloth' ? 'block' : 'none';
+      if (sel.value !== 'Microfiber cloth') clothSel.value = '';
+    }
+  }
+
+  function addToolRow(btn) {
+    const list = btn.previousElementSibling;
+    const toolOpts = TOOLS.map(t => `<option value="${t}">${t}</option>`).join('');
+    const row = document.createElement('div');
+    row.className = 'tool-row';
+    row.style.cssText = 'display:flex;gap:8px;align-items:center;';
+    row.innerHTML = `
+      <select class="scene-tool-item" onchange="handleToolChange(this)" style="flex:1;">
+        <option value="">Select tool...</option>
+        ${toolOpts}
+      </select>
+      <select class="scene-cloth-item" style="display:none;flex:1;">
+        <option value="">Cloth color...</option>
+        <option value="Red">Red</option>
+        <option value="Blue">Blue</option>
+      </select>
+      <button type="button" class="btn-remove" onclick="this.closest('.tool-row').remove()" style="flex-shrink:0;">✕</button>`;
+    list.appendChild(row);
+  }
+
   /* ─── Webhook storage ─── */
-  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyqGvnuORnAzcswyEnSKEUL8vUpK-MoUJ0H3ZFVVDihTGuE47RWvqnuRDPVi_0-8swxvQ/exec';
+  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyBvSKjfzKqH0e-bfh-_1RFPneqKv1fIsVEBDmetVJS55VQvmuADBYVNf9fGWBlAVXPIg/exec';
 
   /* ─── Collect form data ─── */
   function collectData() {
@@ -718,15 +877,19 @@
 
       const scenes = [];
       document.querySelectorAll(`#scenes-${id} .scene-block`).forEach(sb => {
-        const inputs = sb.querySelectorAll('input[type="text"]');
-        const gloves = sb.querySelector('.scene-gloves');
+        const dispenserCb = sb.querySelector('.scene-dispenser-cb');
+        const dilutionCb = sb.querySelector('.scene-dilution-cb');
         scenes.push({
-          action: inputs[0]?.value || '',
-          product: inputs[1]?.value || '',
-          tool: inputs[2]?.value || '',
-          cloth: inputs[3]?.value || '',
-          gloves: gloves?.value || '',
-          notes: inputs[4]?.value || '',
+          action: sb.querySelector('.scene-action')?.value || '',
+          surface: sb.querySelector('.scene-surface')?.value || '',
+          product: sb.querySelector('.scene-product')?.value || '',
+          sku: sb.querySelector('.scene-sku')?.value || '',
+          tool: [...sb.querySelectorAll('.scene-tool-item')].map(s=>s.value).filter(Boolean).join(', '),
+          cloth: [...sb.querySelectorAll('.scene-cloth-item')].filter(s=>s.style.display!=='none').map(s=>s.value).filter(Boolean).join(', '),
+          gloves: sb.querySelector('.scene-gloves')?.value || '',
+          dispenser: dispenserCb?.checked ? (sb.querySelector('.scene-dispenser')?.value || 'Yes') : '',
+          dilution: dilutionCb?.checked ? (sb.querySelector('.scene-dilution')?.value || 'Yes') : '',
+          notes: sb.querySelector('.scene-notes')?.value || '',
         });
       });
 
@@ -739,6 +902,7 @@
 
     return {
       timestamp: new Date().toISOString(),
+      sector: document.getElementById('f-sector').value,
       title: document.getElementById('f-title').value,
       client: document.getElementById('f-client').value,
       author: document.getElementById('f-author').value,
@@ -761,6 +925,7 @@
     if (!data.client) return 'Client / region is required.';
     if (!data.author) return 'Prepared by is required.';
     if (!data.date) return 'Date is required.';
+    if (!data.sector) return 'Please select an industry sector.';
     if (!data.character) return 'Character type is required.';
     for (const env of data.environments) {
       if (!env.location) return 'Please select a location type for all environments.';
