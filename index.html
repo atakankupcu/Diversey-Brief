@@ -536,22 +536,7 @@
           <input type="text" id="f-uniform" placeholder="e.g. Blue polo shirt, dark trousers">
         </div>
       </div>
-      <div class="field" style="margin-bottom:14px;">
-        <label>PPE requirements <span class="req">*</span></label>
-        <div class="tag-row" id="ppe-tags">
-          <span class="tag" data-val="Nitrile gloves" onclick="toggleTag(this)">Nitrile gloves</span>
-          <span class="tag" data-val="Latex gloves" onclick="toggleTag(this)">Latex gloves</span>
-          <span class="tag" data-val="Rubber gloves" onclick="toggleTag(this)">Rubber gloves</span>
-          <span class="tag" data-val="Apron" onclick="toggleTag(this)">Apron</span>
-          <span class="tag" data-val="Face mask" onclick="toggleTag(this)">Face mask</span>
-          <span class="tag" data-val="Safety goggles" onclick="toggleTag(this)">Safety goggles</span>
-          <span class="tag" data-val="None required" onclick="toggleTag(this)">None required</span>
-        </div>
-      </div>
-      <div class="field">
-        <label>PPE notes</label>
-        <input type="text" id="f-ppe-notes" placeholder="e.g. Gloves must be changed between rooms">
-      </div>
+
     </div>
   </div>
 
@@ -622,8 +607,6 @@
     div.className = 'env-block';
     div.id = 'env-' + id;
 
-    const toolTags = TOOLS.map(t => `<span class="tag" data-val="${t}" onclick="toggleTag(this)">${t}</span>`).join('');
-    const clothTags = CLOTHS.map(c => `<span class="tag" data-val="${c}" onclick="toggleTag(this)">${c}</span>`).join('');
     const locationOpts = LOCATIONS.map(l => `<option>${l}</option>`).join('');
 
     div.innerHTML = `
@@ -646,21 +629,6 @@
           <div class="field">
             <label>Location description</label>
             <input type="text" id="env-desc-${id}" placeholder="e.g. 4-star hotel standard bathroom">
-          </div>
-        </div>
-        <div class="field" style="margin-bottom:14px;">
-          <label>Products used <span class="req">*</span></label>
-          <textarea id="env-products-${id}" rows="2" placeholder="Product name — dilution ratio — application method&#10;e.g. Taski Sani 4in1 — 1:50 — spray and wipe"></textarea>
-        </div>
-        <div class="field-grid col-2" style="margin-bottom:14px;">
-          <div class="field">
-            <label>Tools & equipment</label>
-            <div class="tag-row" id="env-tools-${id}">${toolTags}</div>
-          </div>
-          <div class="field">
-            <label>Cloth colors</label>
-            <div class="tag-row" id="env-cloths-${id}">${clothTags}</div>
-            <p class="hint">Specify per scene which color is used on which surface.</p>
           </div>
         </div>
         <div class="divider"></div>
@@ -703,19 +671,35 @@
           <label>Action / step description <span class="req">*</span></label>
           <input type="text" placeholder="e.g. Apply disinfectant to toilet bowl interior and under rim">
         </div>
-        <div class="field-grid col-2">
+        <div class="field-grid col-3">
           <div class="field">
-            <label>Product in this scene</label>
+            <label>Product</label>
             <input type="text" placeholder="e.g. Taski Sani 4in1">
           </div>
           <div class="field">
-            <label>Tool / cloth color</label>
-            <input type="text" placeholder="e.g. Red cloth, toilet brush">
+            <label>Tool</label>
+            <input type="text" placeholder="e.g. Spray bottle, mop">
+          </div>
+          <div class="field">
+            <label>Cloth color</label>
+            <input type="text" placeholder="e.g. Red cloth">
           </div>
         </div>
-        <div class="field">
-          <label>Special notes / warnings</label>
-          <input type="text" placeholder="e.g. Must show 30-second contact time">
+        <div class="field-grid col-2">
+          <div class="field">
+            <label>Gloves required?</label>
+            <select class="scene-gloves">
+              <option value="">Select...</option>
+              <option value="Yes — Nitrile">Yes — Nitrile</option>
+              <option value="Yes — Latex">Yes — Latex</option>
+              <option value="Yes — Rubber">Yes — Rubber</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Special notes / warnings</label>
+            <input type="text" placeholder="e.g. 30-second contact time">
+          </div>
         </div>
       </div>`;
 
@@ -723,7 +707,7 @@
   }
 
   /* ─── Webhook storage ─── */
-  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxFTAiVYaf9kFtqFNU6rmcF0iuRLFz7iuV8n8h062qpbjx97QM2Qul2I9JLVZ5GNBbtpA/exec';
+  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyqGvnuORnAzcswyEnSKEUL8vUpK-MoUJ0H3ZFVVDihTGuE47RWvqnuRDPVi_0-8swxvQ/exec';
 
   /* ─── Collect form data ─── */
   function collectData() {
@@ -735,20 +719,20 @@
       const scenes = [];
       document.querySelectorAll(`#scenes-${id} .scene-block`).forEach(sb => {
         const inputs = sb.querySelectorAll('input[type="text"]');
+        const gloves = sb.querySelector('.scene-gloves');
         scenes.push({
           action: inputs[0]?.value || '',
           product: inputs[1]?.value || '',
           tool: inputs[2]?.value || '',
-          notes: inputs[3]?.value || '',
+          cloth: inputs[3]?.value || '',
+          gloves: gloves?.value || '',
+          notes: inputs[4]?.value || '',
         });
       });
 
       environments.push({
         location: el.value,
         description: document.getElementById('env-desc-' + id)?.value || '',
-        products: document.getElementById('env-products-' + id)?.value || '',
-        tools: getSelectedTags('env-tools-' + id),
-        cloths: getSelectedTags('env-cloths-' + id),
         scenes,
       });
     });
@@ -764,8 +748,7 @@
       environments,
       character: document.getElementById('f-character').value,
       uniform: document.getElementById('f-uniform').value,
-      ppe: getSelectedTags('ppe-tags'),
-      ppeNotes: document.getElementById('f-ppe-notes').value,
+
       brandGuidelines: document.getElementById('f-brand').value,
       donts: document.getElementById('f-donts').value,
       notes: document.getElementById('f-notes').value,
@@ -779,10 +762,8 @@
     if (!data.author) return 'Prepared by is required.';
     if (!data.date) return 'Date is required.';
     if (!data.character) return 'Character type is required.';
-    if (!data.ppe) return 'Please select at least one PPE option.';
     for (const env of data.environments) {
       if (!env.location) return 'Please select a location type for all environments.';
-      if (!env.products) return 'Please fill in products for all environments.';
     }
     return null;
   }
