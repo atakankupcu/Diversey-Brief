@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Diversey — Production Brief</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzA3MjYzNSIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwQ0M5OSIgc3Ryb2tlLXdpZHRoPSIyLjUiLz48bGluZSB4MT0iMTYiIHkxPSIxMSIgeDI9IjE2IiB5Mj0iMjEiIHN0cm9rZT0iIzAwQ0M5OSIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMSIgeTE9IjE2IiB4Mj0iMjEiIHkyPSIxNiIgc3Ryb2tlPSIjMDBDQzk5IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+">
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -488,11 +489,22 @@
           <input type="text" id="f-title" placeholder="e.g. Hotel Room Cleaning — Standard Procedure">
         </div>
         <div class="field">
-          <label>Client / region <span class="req">*</span></label>
-          <input type="text" id="f-client" placeholder="e.g. Diversey EMEA">
+          <label>Client <span class="req">*</span></label>
+          <select id="f-client"><option value="">Search or type client...</option></select>
         </div>
       </div>
-      <div class="field-grid col-3">
+      <div class="field-grid col-3" style="margin-bottom:14px;">
+        <div class="field">
+          <label>Region <span class="req">*</span></label>
+          <select id="f-region">
+            <option value="">Select region...</option>
+            <option value="EMEA">EMEA</option>
+            <option value="North America">North America</option>
+            <option value="Latin America">Latin America</option>
+            <option value="Asia Pacific">Asia Pacific</option>
+            <option value="Global">Global</option>
+          </select>
+        </div>
         <div class="field">
           <label>Prepared by <span class="req">*</span></label>
           <input type="text" id="f-author" placeholder="Name, department">
@@ -570,6 +582,10 @@
         <div class="field">
           <label>What NOT to show</label>
           <textarea id="f-donts" placeholder="Actions, products, or situations that must be avoided in the video"></textarea>
+        </div>
+        <div class="field">
+          <label>Safety notes</label>
+          <textarea id="f-safety" placeholder="General safety requirements, hazard warnings, or regulatory notes that apply to the entire video..."></textarea>
         </div>
         <div class="field">
           <label>Additional notes</label>
@@ -669,6 +685,7 @@
   document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
   addEnv();
   addScene(1);
+  loadFormData();
 
   /* ─── Tags ─── */
   function toggleTag(el) { el.classList.toggle('on'); }
@@ -765,11 +782,12 @@
         <div class="field-grid col-2">
           <div class="field">
             <label>Product</label>
-            <input type="text" class="scene-product" placeholder="e.g. Taski Sani 4in1">
+            <select class="scene-product-sel"><option value="">Search product...</option></select>
+            <input type="hidden" class="scene-product">
           </div>
           <div class="field">
             <label>Product SKU</label>
-            <input type="text" class="scene-sku" placeholder="Optional">
+            <input type="text" class="scene-sku" placeholder="Auto-fills or type manually">
           </div>
         </div>
         <div class="field">
@@ -789,21 +807,40 @@
           </div>
           <button type="button" class="btn-ghost" style="margin-top:6px;padding:5px 0;font-size:12px;" onclick="addToolRow(this)">+ Add another tool</button>
         </div>
-        <div class="field-grid col-2">
-          <div class="field">
-            <label>Gloves required?</label>
-            <select class="scene-gloves">
-              <option value="">Select...</option>
-              <option value="Yes — Nitrile">Yes — Nitrile</option>
-              <option value="Yes — Latex">Yes — Latex</option>
-              <option value="Yes — Rubber">Yes — Rubber</option>
-              <option value="No">No</option>
-            </select>
+        <div style="margin-top:4px;">
+          <div style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;padding-bottom:5px;border-bottom:0.5px solid var(--border);">EHS — Environmental, Health & Safety</div>
+          <div class="field-grid col-3">
+            <div class="field">
+              <label>Gloves</label>
+              <select class="scene-gloves">
+                <option value="">Select...</option>
+                <option value="Yes — Nitrile">Yes — Nitrile</option>
+                <option value="Yes — Latex">Yes — Latex</option>
+                <option value="Yes — Rubber">Yes — Rubber</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Mask</label>
+              <select class="scene-mask">
+                <option value="">Select...</option>
+                <option value="Yes — Surgical">Yes — Surgical</option>
+                <option value="Yes — FFP2/N95">Yes — FFP2/N95</option>
+                <option value="Yes — Full face respirator">Yes — Full face respirator</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Safety goggles</label>
+              <select class="scene-goggles">
+                <option value="">Select...</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
           </div>
-          <div class="field">
-            <label>Special notes / warnings</label>
-            <input type="text" class="scene-notes" placeholder="e.g. 30-second contact time required">
-          </div>
+        </div>
+
         </div>
         <div class="field-grid col-2">
           <div class="field">
@@ -824,6 +861,8 @@
       </div>`;
 
     container.appendChild(div);
+    const newSel = div.querySelector('.scene-product-sel');
+    if (newSel && PRODUCTS.length > 0) initProductSelect(newSel);
   }
 
   /* ─── Scene helpers ─── */
@@ -866,8 +905,65 @@
     list.appendChild(row);
   }
 
+  /* ─── Tom Select styles ─── */
+  const tsStyle = document.createElement('style');
+  tsStyle.textContent = `.ts-wrapper.single .ts-control{border:1px solid var(--border);border-radius:7px;padding:7px 11px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--surface);color:var(--text);min-height:unset;height:auto}.ts-wrapper.single.focus .ts-control{border-color:var(--blue);box-shadow:0 0 0 3px rgba(51,102,255,0.1)}.ts-dropdown{border:1px solid var(--border);border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,0.08)}.ts-dropdown .option.active{background:#EEF2FF;color:var(--blue)}.ts-dropdown .option:hover{background:#EEF2FF}`;
+  document.head.appendChild(tsStyle);
+
+  /* ─── Product & Client data ─── */
+  let PRODUCTS = [];
+  let CLIENTS = [];
+  let clientTS = null;
+
+  async function loadFormData() {
+    try {
+      const res = await fetch(WEBHOOK_URL_GET);
+      const data = await res.json();
+      PRODUCTS = data.products || [];
+      CLIENTS = data.clients || [];
+      initClientSelect();
+      document.querySelectorAll('.scene-product-sel').forEach(sel => initProductSelect(sel));
+    } catch(err) {
+      console.warn('Could not load products/clients:', err);
+    }
+  }
+
+  function initClientSelect() {
+    if (clientTS) clientTS.destroy();
+    const el = document.getElementById('f-client');
+    if (!el) return;
+    clientTS = new TomSelect(el, {
+      options: CLIENTS.map(c => ({ value: c, text: c })),
+      create: true,
+      placeholder: 'Search or type client...',
+      maxOptions: 50,
+    });
+  }
+
+  function initProductSelect(sel) {
+    if (sel.tomselect) sel.tomselect.destroy();
+    new TomSelect(sel, {
+      options: PRODUCTS.map(p => ({ value: p.name, text: p.name, sku: p.sku })),
+      create: true,
+      placeholder: 'Search product...',
+      maxOptions: 50,
+      onChange: function(val) {
+        const sceneBlock = sel.closest('.scene-block');
+        if (!sceneBlock) return;
+        const hiddenInput = sceneBlock.querySelector('.scene-product');
+        if (hiddenInput) hiddenInput.value = val;
+        const skuInput = sceneBlock.querySelector('.scene-sku');
+        if (skuInput) {
+          const match = PRODUCTS.find(p => p.name === val);
+          skuInput.value = match ? match.sku : '';
+        }
+      }
+    });
+  }
+
   /* ─── Webhook storage ─── */
-  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyBvSKjfzKqH0e-bfh-_1RFPneqKv1fIsVEBDmetVJS55VQvmuADBYVNf9fGWBlAVXPIg/exec';
+  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycby2peIocjeCYsh4_4Ek6Pv8C1S7yZL6tlmWJ7CFAewDnyW2ffOVbSQ4M0WDY7fxpKY_Vw/exec';
+  const WEBHOOK_URL_GET = WEBHOOK_URL;
 
   /* ─── Collect form data ─── */
   function collectData() {
@@ -883,11 +979,13 @@
         scenes.push({
           action: sb.querySelector('.scene-action')?.value || '',
           surface: sb.querySelector('.scene-surface')?.value || '',
-          product: sb.querySelector('.scene-product')?.value || '',
+          product: sb.querySelector('.scene-product')?.value || sb.querySelector('.scene-product-sel')?.value || '',
           sku: sb.querySelector('.scene-sku')?.value || '',
           tool: [...sb.querySelectorAll('.scene-tool-item')].map(s=>s.value).filter(Boolean).join(', '),
           cloth: [...sb.querySelectorAll('.scene-cloth-item')].filter(s=>s.style.display!=='none').map(s=>s.value).filter(Boolean).join(', '),
           gloves: sb.querySelector('.scene-gloves')?.value || '',
+          mask: sb.querySelector('.scene-mask')?.value || '',
+          goggles: sb.querySelector('.scene-goggles')?.value || '',
           dispenser: dispenserCb?.checked ? (sb.querySelector('.scene-dispenser')?.value || 'Yes') : '',
           dilution: dilutionCb?.checked ? (sb.querySelector('.scene-dilution')?.value || 'Yes') : '',
           notes: sb.querySelector('.scene-notes')?.value || '',
@@ -906,6 +1004,7 @@
       sector: document.getElementById('f-sector').value,
       title: document.getElementById('f-title').value,
       client: document.getElementById('f-client').value,
+      region: document.getElementById('f-region').value,
       author: document.getElementById('f-author').value,
       email: document.getElementById('f-email').value,
       date: document.getElementById('f-date').value,
@@ -916,6 +1015,7 @@
 
       brandGuidelines: document.getElementById('f-brand').value,
       donts: document.getElementById('f-donts').value,
+      safetyNotes: document.getElementById('f-safety').value,
       notes: document.getElementById('f-notes').value,
     };
   }
@@ -923,7 +1023,8 @@
   /* ─── Validate ─── */
   function validate(data) {
     if (!data.title) return 'Brief title is required.';
-    if (!data.client) return 'Client / region is required.';
+    if (!data.client) return 'Client is required.';
+    if (!data.region) return 'Region is required.';
     if (!data.author) return 'Prepared by is required.';
     if (!data.date) return 'Date is required.';
     if (!data.sector) return 'Please select an industry sector.';
@@ -971,5 +1072,6 @@
     setTimeout(() => { t.style.display = 'none'; }, 3500);
   }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 </body>
 </html>
