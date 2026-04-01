@@ -917,36 +917,45 @@
 
   async function loadFormData() {
     try {
-      const res = await fetch(WEBHOOK_URL_GET);
-      const data = await res.json();
+      const url = WEBHOOK_URL_GET + '?t=' + Date.now();
+      const res = await fetch(url, { method: 'GET' });
+      const text = await res.text();
+      const data = JSON.parse(text);
+      if (data.error) throw new Error(data.error);
       PRODUCTS = data.products || [];
       CLIENTS = data.clients || [];
-      initClientSelect();
-      document.querySelectorAll('.scene-product-sel').forEach(sel => initProductSelect(sel));
     } catch(err) {
-      console.warn('Could not load products/clients:', err);
+      console.warn('Could not load from Sheets:', err);
+      PRODUCTS = [];
+      CLIENTS = [];
     }
+    initClientSelect();
+    document.querySelectorAll('.scene-product-sel').forEach(sel => initProductSelect(sel));
   }
 
   function initClientSelect() {
-    if (clientTS) clientTS.destroy();
     const el = document.getElementById('f-client');
     if (!el) return;
-    clientTS = new TomSelect(el, {
+    if (el.tomselect) el.tomselect.destroy();
+    new TomSelect(el, {
       options: CLIENTS.map(c => ({ value: c, text: c })),
       create: true,
+      createOnBlur: true,
       placeholder: 'Search or type client...',
-      maxOptions: 50,
+      maxOptions: 100,
     });
   }
 
   function initProductSelect(sel) {
+    if (!sel) return;
     if (sel.tomselect) sel.tomselect.destroy();
     new TomSelect(sel, {
-      options: PRODUCTS.map(p => ({ value: p.name, text: p.name, sku: p.sku })),
+      options: PRODUCTS.map(p => ({ value: p.name, text: p.name + (p.sku ? ' — ' + p.sku : ''), sku: p.sku })),
       create: true,
-      placeholder: 'Search product...',
+      createOnBlur: true,
+      placeholder: 'Search product or type...',
       maxOptions: 50,
+      searchField: ['text'],
       onChange: function(val) {
         const sceneBlock = sel.closest('.scene-block');
         if (!sceneBlock) return;
@@ -955,14 +964,14 @@
         const skuInput = sceneBlock.querySelector('.scene-sku');
         if (skuInput) {
           const match = PRODUCTS.find(p => p.name === val);
-          skuInput.value = match ? match.sku : '';
+          if (match && match.sku) skuInput.value = match.sku;
         }
       }
     });
   }
 
   /* ─── Webhook storage ─── */
-  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycby2peIocjeCYsh4_4Ek6Pv8C1S7yZL6tlmWJ7CFAewDnyW2ffOVbSQ4M0WDY7fxpKY_Vw/exec';
+  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwbZJ_dAjR2ixtLXkH-w-5UT7fttkIu3-n9p0RoXwmyQuRzEte6_9i0ObWyaPeg9qQS4w/exec';
   const WEBHOOK_URL_GET = WEBHOOK_URL;
 
   /* ─── Collect form data ─── */
