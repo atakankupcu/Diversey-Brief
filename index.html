@@ -612,28 +612,6 @@
     </div>
   </div>
 
-  <!-- 5. Reference Photos -->
-  <div class="section">
-    <div class="section-head">
-      <div class="num">5</div>
-      <h2>Reference photos</h2>
-    </div>
-    <div class="section-body">
-      <p class="hint" style="margin-bottom:12px;">Upload reference images for the production team — product shots, location photos, style references etc.</p>
-      <div id="photo-drop-zone" style="border:2px dashed var(--border);border-radius:var(--radius);padding:2rem;text-align:center;cursor:pointer;transition:border-color 0.15s;background:var(--bg);"
-        onclick="document.getElementById('photo-input').click()"
-        ondragover="event.preventDefault();this.style.borderColor='var(--blue)'"
-        ondragleave="this.style.borderColor='var(--border)'"
-        ondrop="handlePhotoDrop(event)">
-        <div style="font-size:24px;margin-bottom:8px;color:var(--muted);">&#128247;</div>
-        <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px;">Click to upload or drag & drop</div>
-        <div style="font-size:12px;color:var(--muted);">JPG, PNG, WEBP — any size, any number of files</div>
-        <input type="file" id="photo-input" multiple accept="image/*" style="display:none;" onchange="handlePhotoSelect(this.files)">
-      </div>
-      <div id="photo-preview" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;"></div>
-    </div>
-  </div>
-
   <!-- Submit -->
   <div class="submit-area">
     <div class="submit-info">
@@ -647,7 +625,7 @@
 <div id="toast"></div>
 
 <script>
-  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzTRpUo92Qy6e_NXA0Tlutk1HApTRCH_4maJIt1Tnl2kL82rCB-u9UFeg_wPlRn3OBKDw/exec';
+  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyygmg5wwFa6DqrR9N3ej3I15BnqcdCvXbs_9fPvW7pD9o0R5jV52lH3T_8HHDh0j0tdw/exec';
   const WEBHOOK_URL_GET = WEBHOOK_URL;
 
   /* ─── State ─── */
@@ -1028,59 +1006,6 @@
     if (sceneBlock && sku) sceneBlock.querySelector('.scene-sku').value = sku;
   }
 
-  /* ─── Photo upload ─── */
-  let UPLOADED_PHOTOS = [];
-
-  function handlePhotoSelect(files) {
-    [...files].forEach(file => processPhoto(file));
-  }
-
-  function handlePhotoDrop(e) {
-    e.preventDefault();
-    document.getElementById('photo-drop-zone').style.borderColor = 'var(--border)';
-    [...e.dataTransfer.files].filter(f => f.type.startsWith('image/')).forEach(f => processPhoto(f));
-  }
-
-  function processPhoto(file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      // Compress via canvas
-      const img = new Image();
-      img.onload = function() {
-        const MAX = 1200;
-        let w = img.width, h = img.height;
-        if (w > MAX || h > MAX) {
-          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-          else { w = Math.round(w * MAX / h); h = MAX; }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        const compressed = canvas.toDataURL('image/jpeg', 0.75);
-        const id = 'photo-' + Date.now() + '-' + Math.random().toString(36).slice(2);
-        UPLOADED_PHOTOS.push({ id, name: file.name, data: compressed.split(',')[1], type: 'image/jpeg' });
-        renderPhotoPreview();
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function renderPhotoPreview() {
-    const container = document.getElementById('photo-preview');
-    container.innerHTML = UPLOADED_PHOTOS.map(p => `
-      <div style="position:relative;width:100px;height:100px;border-radius:8px;overflow:hidden;border:1px solid var(--border);">
-        <img src="data:image/jpeg;base64,${p.data}" style="width:100%;height:100%;object-fit:cover;">
-        <button onclick="removePhoto('${p.id}')" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.55);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
-        <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);color:#fff;font-size:9px;padding:2px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
-      </div>`).join('');
-  }
-
-  function removePhoto(id) {
-    UPLOADED_PHOTOS = UPLOADED_PHOTOS.filter(p => p.id !== id);
-    renderPhotoPreview();
-  }
-
   /* ─── Webhook storage ─── */
 
 
@@ -1135,7 +1060,6 @@
       donts: document.getElementById('f-donts').value,
       safetyNotes: document.getElementById('f-safety').value,
       notes: document.getElementById('f-notes').value,
-      photos: UPLOADED_PHOTOS.map(p => ({ name: p.name, data: p.data, type: p.type })),
     };
   }
 
