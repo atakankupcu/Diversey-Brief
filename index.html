@@ -625,7 +625,7 @@
 <div id="toast"></div>
 
 <script>
-  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyygmg5wwFa6DqrR9N3ej3I15BnqcdCvXbs_9fPvW7pD9o0R5jV52lH3T_8HHDh0j0tdw/exec';
+  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyRZJiCk0dnl2umU2ENfVewBKzIjVLwgkT6nF5ot7yBOq4S4G0EJKzP4JAvp6ppOduWpQ/exec';
   const WEBHOOK_URL_GET = WEBHOOK_URL;
 
   /* ─── State ─── */
@@ -1093,11 +1093,12 @@
     btn.textContent = 'Submitting…';
 
     try {
+      const formData = new FormData();
+      formData.append('data', JSON.stringify(data));
       await fetch(webhookUrl, {
         method: 'POST',
         mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: formData,
       });
       showToast('Brief submitted successfully');
       btn.textContent = 'Submitted ✓';
