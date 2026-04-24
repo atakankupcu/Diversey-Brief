@@ -335,7 +335,7 @@
       </div>
     </div>
     <div class="section-body">
-      <p class="hint" style="margin-bottom:12px;">Referans fotoğraf, eskiz veya görsel yükleyin. Drive'a bağlandıktan sonra otomatik kaydedilir.</p>
+      <p class="hint" style="margin-bottom:12px;">Upload reference photos, sketches or visuals. Files are saved automatically to Drive.</p>
       <div class="photo-upload-wrap">
         <div class="photo-dropzone" id="photo-dropzone"
           ondragover="event.preventDefault();this.classList.add('drag-over')"
@@ -345,8 +345,8 @@
             onchange="handleFileSelect(this.files)">
           <div class="photo-dropzone-icon">📎</div>
           <div class="photo-dropzone-text">
-            <strong>Dosya seç</strong> veya buraya sürükle<br>
-            <span style="font-size:11px;">JPG, PNG, GIF, MP4, PDF — maks. 50MB/dosya</span>
+            <strong>Select files</strong> or drag &amp; drop here<br>
+            <span style="font-size:11px;">JPG, PNG, GIF, MP4, PDF — max 50MB per file</span>
           </div>
         </div>
         <div class="photo-grid" id="photo-grid"></div>
@@ -1024,7 +1024,7 @@
   function handleFileSelect(files) {
     Array.from(files).forEach(file => {
       if (file.size > 50 * 1024 * 1024) {
-        showToast('⚠ ' + file.name + ' 50MB limitini aşıyor', true);
+        showToast('⚠ ' + file.name + ' exceeds the 50MB limit', true);
         return;
       }
       addPhotoThumb(file);
@@ -1060,7 +1060,7 @@
 
   function uploadViaAppsScript(file) {
     const briefTitle = document.getElementById('f-title').value || 'Untitled Brief';
-    setDriveStatus('uploading', '⬆ Yükleniyor: ' + file.name + '...');
+    setDriveStatus('uploading', '⬆ Uploading: ' + file.name + '...');
 
     const reader = new FileReader();
     reader.onload = async function(e) {
@@ -1085,11 +1085,11 @@
           if (json.folderUrl) photosFolderUrl = json.folderUrl;
           const badge = document.getElementById('badge-' + encodeURIComponent(file.name));
           if (badge) badge.textContent = '✓';
-          setDriveStatus('connected', '✓ Yüklendi: ' + file.name);
+          setDriveStatus('connected', '✓ Uploaded: ' + file.name);
           setTimeout(() => {
             const d = document.getElementById('drive-status');
             const grid = document.getElementById('photo-grid');
-            if (grid.children.length > 0) setDriveStatus('connected', '✓ ' + grid.children.length + ' dosya yüklendi');
+            if (grid.children.length > 0) setDriveStatus('connected', '✓ ' + grid.children.length + ' file(s) uploaded');
             else d.style.display = 'none';
           }, 3000);
         } else {
@@ -1098,7 +1098,7 @@
       } catch(err) {
         const badge = document.getElementById('badge-' + encodeURIComponent(file.name));
         if (badge) { badge.textContent = '⚠'; badge.style.background = 'var(--danger)'; }
-        setDriveStatus('error', '⚠ Hata: ' + err.message);
+        setDriveStatus('error', '⚠ Upload error: ' + err.message);
       }
     };
     reader.readAsDataURL(file);
