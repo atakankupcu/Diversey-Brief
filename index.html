@@ -1075,10 +1075,18 @@
     briefTitle = briefTitle || document.getElementById('f-title').value || 'Untitled Brief';
     setDriveStatus('uploading', '⬆ Uploading ' + file.name + '...');
 
+    // Apps Script payload limit ~50MB; base64 is ~33% larger than binary
+    if (file.size > 30 * 1024 * 1024) {
+      setDriveStatus('error', '⚠ ' + file.name + ' is too large (max ~30MB)');
+      return;
+    }
+
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = async function(e) {
-        const base64 = e.target.result.split(',')[1];
+        // Split base64 off the data URL prefix
+        const dataUrl = e.target.result;
+        const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
         try {
           const payload = JSON.stringify({
             action: 'uploadPhoto',
@@ -1089,17 +1097,24 @@
           });
           const formData = new FormData();
           formData.append('data', payload);
-          await fetch(WEBHOOK_URL, { method: 'POST', mode: 'no-cors', body: formData });
-          // no-cors = opaque response, assume success
+          // no-cors required for Apps Script — response is opaque (always looks like success)
+          await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: formData,
+          });
           if (!photosFolderUrl) {
             photosFolderUrl = 'https://drive.google.com/drive/folders/' + DRIVE_FOLDER_ID;
           }
           setDriveStatus('connected', '✓ Uploaded: ' + file.name);
         } catch(err) {
-          setDriveStatus('error', '⚠ Upload error: ' + err.message);
+          // "Failed to fetch" usually means Apps Script is not deployed as "Anyone"
+          setDriveStatus('error', '⚠ Upload failed. Check Apps Script deployment (set access to Anyone).');
+          console.error('Upload error:', err);
         }
         resolve();
       };
+      reader.onerror = () => { setDriveStatus('error', '⚠ Could not read file.'); resolve(); };
       reader.readAsDataURL(file);
     });
   }
