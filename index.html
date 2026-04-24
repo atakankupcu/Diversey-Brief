@@ -396,7 +396,7 @@
 <div id="toast"></div>
 
 <script>
-  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxeKgrdEojamMoIYZqdrnCa92KYJ1QRbPw6CGFOBF-Af2nDArQ0n3NGLXs6Wc3WPM6_Tw/exec';
+  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbwCxC7yijieRH1oUc5rKd-I-cLrak77fxHh_lxgQgYHEvUJLrcKjUaBM2k3Snbk2NVjAQ/exec';
   const WEBHOOK_URL_GET = WEBHOOK_URL;
 
   let envCount = 0;
@@ -979,14 +979,19 @@
     const btn = document.getElementById('submit-btn');
     btn.disabled = true;
 
-    // Upload photos first (if any)
+    // Encode pending photos as base64 and attach to brief data
     if (pendingPhotoFiles.length > 0) {
-      btn.textContent = 'Uploading photos…';
+      btn.textContent = 'Reading photos…';
+      data.photos = [];
       for (const file of pendingPhotoFiles) {
-        await uploadViaAppsScript(file, data.title);
+        try {
+          const b64 = await fileToBase64(file);
+          data.photos.push({ name: file.name, mimeType: file.type || 'application/octet-stream', data: b64 });
+        } catch(e) {
+          console.warn('Could not read file:', file.name, e);
+        }
       }
       pendingPhotoFiles = [];
-      data.photosFolder = photosFolderUrl; // attach folder URL to brief data
     }
 
     btn.textContent = 'Submitting…';
@@ -1000,6 +1005,15 @@
       showToast('Submission failed — check your URL', true);
       btn.disabled = false; btn.textContent = 'Submit Brief';
     }
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   /* ─── Toast ─── */
@@ -1024,7 +1038,7 @@
   addEnv();
   addScene(1);
 
-  /* ─── Google Drive (via Apps Script, no auth needed) ─── */
+  /* ─── Photo handling ─── */
   const DRIVE_FOLDER_ID = '1_p-vboDrA6ZZmeCcFpwnnBbfKJRiP04p';
   let photosFolderUrl = '';
 
