@@ -396,7 +396,7 @@
 <div id="toast"></div>
 
 <script>
-  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxJyNTvjY-C3Bp1pQkm_XAY6BHla-Fs7duhJyNyuOetS00zMi8pCzLxP_wDDvzfe0AXTQ/exec';
+  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxeKgrdEojamMoIYZqdrnCa92KYJ1QRbPw6CGFOBF-Af2nDArQ0n3NGLXs6Wc3WPM6_Tw/exec';
   const WEBHOOK_URL_GET = WEBHOOK_URL;
 
   let envCount = 0;
@@ -943,7 +943,7 @@
       characterType: document.getElementById('f-character').value,
       uniform: document.getElementById('f-uniform').value,
       environments,
-      photosFolder: photosFolderUrl,
+      ...(photosFolderUrl ? { photosFolder: photosFolderUrl } : {}),
       brandGuidelines: document.getElementById('f-brand').value,
       donts: document.getElementById('f-donts').value,
       safetyNotes: document.getElementById('f-safety').value,
