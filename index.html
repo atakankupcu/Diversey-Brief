@@ -6,7 +6,6 @@
 <title>Diversey — Production Brief</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzA3MjYzNSIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwQ0M5OSIgc3Ryb2tlLXdpZHRoPSIyLjUiLz48bGluZSB4MT0iMTYiIHkxPSIxMSIgeDI9IjE2IiB5Mj0iMjEiIHN0cm9rZT0iIzAwQ0M5OSIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMSIgeTE9IjE2IiB4Mj0iMjEiIHkyPSIxNiIgc3Ryb2tlPSIjMDBDQzk5IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -168,6 +167,13 @@
     display: flex; align-items: center; justify-content: center;
     line-height: 1;
   }
+  .photo-upload-badge {
+    position: absolute; top: -4px; left: -4px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--teal); color: #fff;
+    font-size: 11px; display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
   .photo-item .photo-name {
     font-size: 10px; color: var(--muted); text-align: center;
     max-width: 80px; overflow: hidden; text-overflow: ellipsis;
@@ -180,17 +186,7 @@
   .drive-status.connected { background: rgba(0,204,153,0.1); color: #00875a; display: flex; }
   .drive-status.error { background: rgba(226,75,74,0.1); color: var(--danger); display: flex; }
   .drive-status.uploading { background: rgba(51,102,255,0.08); color: var(--blue); display: flex; }
-  .btn-drive-connect {
-    background: #fff; color: var(--text);
-    border: 1px solid var(--border);
-    padding: 7px 14px; border-radius: 7px;
-    font-size: 13px; font-family: "DM Sans", sans-serif;
-    cursor: pointer; transition: all 0.12s;
-    display: inline-flex; align-items: center; gap: 6px;
-    font-weight: 500;
-  }
-  .btn-drive-connect:hover { border-color: var(--blue); color: var(--blue); }
-  .btn-drive-connect svg { width: 16px; height: 16px; }
+
 
   /* Responsive */
   @media (max-width: 640px) {
@@ -334,16 +330,8 @@
     <div class="section-head">
       <div class="num">4</div>
       <h2>Reference photos</h2>
-      <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+      <div style="margin-left:auto;">
         <div class="drive-status" id="drive-status"></div>
-        <button class="btn-drive-connect" id="btn-drive" onclick="connectDrive()">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#4285F4"/>
-            <path d="M2 17l10 5 10-5" stroke="#34A853" stroke-width="2" fill="none"/>
-            <path d="M2 12l10 5 10-5" stroke="#FBBC05" stroke-width="2" fill="none"/>
-          </svg>
-          Google Drive'a bağlan
-        </button>
       </div>
     </div>
     <div class="section-body">
@@ -408,7 +396,7 @@
 <div id="toast"></div>
 
 <script>
-  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbx-Z2Fu8zbubMZDbcDWI0qTivnpTMfrFLqplMnpJjYBCDCU3vpHLjcF8VrlDQT7T28NQw/exec';
+  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyNmHIUT16L3hfw6c1-Nmixph4Gjvg8_bq6LxwPL4ztluIl9rEskD3Fgi2H2fB00MEVpQ/exec';
   const WEBHOOK_URL_GET = WEBHOOK_URL;
 
   let envCount = 0;
@@ -955,6 +943,7 @@
       characterType: document.getElementById('f-character').value,
       uniform: document.getElementById('f-uniform').value,
       environments,
+      photosFolder: photosFolderUrl,
       brandGuidelines: document.getElementById('f-brand').value,
       donts: document.getElementById('f-donts').value,
       safetyNotes: document.getElementById('f-safety').value,
@@ -1022,41 +1011,9 @@
   addEnv();
   addScene(1);
 
-  /* ─── Google Drive ─── */
-  const DRIVE_CLIENT_ID = '141960282664-nhe7jsvg9vuc70nv2k8mslhtuubvof54.apps.googleusercontent.com';
+  /* ─── Google Drive (via Apps Script, no auth needed) ─── */
   const DRIVE_FOLDER_ID = '1_p-vboDrA6ZZmeCcFpwnnBbfKJRiP04p';
-  const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
-
-  let driveToken = null;
-  let pendingFiles = [];
-
-  function connectDrive() {
-    const client = google.accounts.oauth2.initTokenClient({
-      client_id: DRIVE_CLIENT_ID,
-      scope: DRIVE_SCOPE,
-      callback: (response) => {
-        if (response.error) {
-          setDriveStatus('error', '⚠ Bağlantı başarısız: ' + response.error);
-          return;
-        }
-        driveToken = response.access_token;
-        setDriveStatus('connected', '✓ Drive bağlı');
-        document.getElementById('btn-drive').style.display = 'none';
-        // Upload any pending files
-        if (pendingFiles.length > 0) {
-          pendingFiles.forEach(f => uploadToDrive(f));
-          pendingFiles = [];
-        }
-      },
-    });
-    client.requestAccessToken();
-  }
-
-  function setDriveStatus(type, msg) {
-    const el = document.getElementById('drive-status');
-    el.className = 'drive-status ' + type;
-    el.textContent = msg;
-  }
+  let photosFolderUrl = '';
 
   function handleDrop(e) {
     e.preventDefault();
@@ -1066,13 +1023,12 @@
 
   function handleFileSelect(files) {
     Array.from(files).forEach(file => {
-      addPhotoThumb(file);
-      if (driveToken) {
-        uploadToDrive(file);
-      } else {
-        pendingFiles.push(file);
-        setDriveStatus('uploading', '⏳ Drive bağlantısı bekleniyor...');
+      if (file.size > 50 * 1024 * 1024) {
+        showToast('⚠ ' + file.name + ' 50MB limitini aşıyor', true);
+        return;
       }
+      addPhotoThumb(file);
+      uploadViaAppsScript(file);
     });
   }
 
@@ -1080,13 +1036,14 @@
     const grid = document.getElementById('photo-grid');
     const item = document.createElement('div');
     item.className = 'photo-item';
-    item.id = 'photo-' + file.name.replace(/[^a-z0-9]/gi, '_');
+    item.id = 'photo-' + encodeURIComponent(file.name);
 
     if (file.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = e => {
         item.innerHTML = `
           <img src="${e.target.result}" alt="${file.name}">
+          <div class="photo-upload-badge" id="badge-${encodeURIComponent(file.name)}">⏳</div>
           <button class="photo-remove" onclick="this.closest('.photo-item').remove()" title="Kaldır">✕</button>
           <div class="photo-name">${file.name}</div>`;
       };
@@ -1094,40 +1051,63 @@
     } else {
       item.innerHTML = `
         <div style="width:80px;height:80px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;background:#f7f8fa;">📄</div>
+        <div class="photo-upload-badge" id="badge-${encodeURIComponent(file.name)}">⏳</div>
         <button class="photo-remove" onclick="this.closest('.photo-item').remove()" title="Kaldır">✕</button>
         <div class="photo-name">${file.name}</div>`;
     }
     grid.appendChild(item);
   }
 
-  async function uploadToDrive(file) {
-    setDriveStatus('uploading', `⬆ Yükleniyor: ${file.name}...`);
-    try {
-      const metadata = {
-        name: file.name,
-        parents: [DRIVE_FOLDER_ID],
-      };
-      const form = new FormData();
-      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-      form.append('file', file);
+  function uploadViaAppsScript(file) {
+    const briefTitle = document.getElementById('f-title').value || 'Untitled Brief';
+    setDriveStatus('uploading', '⬆ Yükleniyor: ' + file.name + '...');
 
-      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + driveToken },
-        body: form,
-      });
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      const base64 = e.target.result.split(',')[1];
+      try {
+        const res = await fetch(WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'uploadPhoto',
+            briefTitle: briefTitle,
+            fileName: file.name,
+            mimeType: file.type || 'application/octet-stream',
+            data: base64,
+          }),
+        });
+        const text = await res.text();
+        let json;
+        try { json = JSON.parse(text); } catch(pe) { throw new Error(text); }
 
-      if (res.ok) {
-        const data = await res.json();
-        setDriveStatus('connected', `✓ Yüklendi: ${file.name}`);
-        setTimeout(() => setDriveStatus('connected', '✓ Drive bağlı'), 3000);
-      } else {
-        const err = await res.json();
-        setDriveStatus('error', '⚠ Yükleme hatası: ' + (err.error?.message || res.status));
+        if (json.status === 'ok') {
+          if (json.folderUrl) photosFolderUrl = json.folderUrl;
+          const badge = document.getElementById('badge-' + encodeURIComponent(file.name));
+          if (badge) badge.textContent = '✓';
+          setDriveStatus('connected', '✓ Yüklendi: ' + file.name);
+          setTimeout(() => {
+            const d = document.getElementById('drive-status');
+            const grid = document.getElementById('photo-grid');
+            if (grid.children.length > 0) setDriveStatus('connected', '✓ ' + grid.children.length + ' dosya yüklendi');
+            else d.style.display = 'none';
+          }, 3000);
+        } else {
+          throw new Error(json.message || 'Upload failed');
+        }
+      } catch(err) {
+        const badge = document.getElementById('badge-' + encodeURIComponent(file.name));
+        if (badge) { badge.textContent = '⚠'; badge.style.background = 'var(--danger)'; }
+        setDriveStatus('error', '⚠ Hata: ' + err.message);
       }
-    } catch(e) {
-      setDriveStatus('error', '⚠ ' + e.message);
-    }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function setDriveStatus(type, msg) {
+    const el = document.getElementById('drive-status');
+    el.className = 'drive-status ' + type;
+    el.textContent = msg;
   }
 
   async function loadFormData() {
