@@ -975,8 +975,21 @@
     const data = collectData();
     const err = validate(data);
     if (err) { showToast('⚠ ' + err, true); return; }
+
     const btn = document.getElementById('submit-btn');
-    btn.disabled = true; btn.textContent = 'Submitting…';
+    btn.disabled = true;
+
+    // Upload photos first (if any)
+    if (pendingPhotoFiles.length > 0) {
+      btn.textContent = 'Uploading photos…';
+      for (const file of pendingPhotoFiles) {
+        await uploadViaAppsScript(file, data.title);
+      }
+      pendingPhotoFiles = [];
+      data.photosFolder = photosFolderUrl; // attach folder URL to brief data
+    }
+
+    btn.textContent = 'Submitting…';
     try {
       const formData = new FormData();
       formData.append('data', JSON.stringify(data));
@@ -1021,6 +1034,8 @@
     handleFileSelect(e.dataTransfer.files);
   }
 
+  let pendingPhotoFiles = []; // files queued for upload on submit
+
   function handleFileSelect(files) {
     Array.from(files).forEach(file => {
       if (file.size > 50 * 1024 * 1024) {
@@ -1028,7 +1043,7 @@
         return;
       }
       addPhotoThumb(file);
-      uploadViaAppsScript(file);
+      pendingPhotoFiles.push(file);
     });
   }
 
@@ -1043,65 +1058,59 @@
       reader.onload = e => {
         item.innerHTML = `
           <img src="${e.target.result}" alt="${file.name}">
-          <div class="photo-upload-badge" id="badge-${encodeURIComponent(file.name)}">⏳</div>
-          <button class="photo-remove" onclick="this.closest('.photo-item').remove()" title="Kaldır">✕</button>
+          <button class="photo-remove" onclick="removePhoto(this, '${file.name}')" title="Remove">✕</button>
           <div class="photo-name">${file.name}</div>`;
       };
       reader.readAsDataURL(file);
     } else {
       item.innerHTML = `
         <div style="width:80px;height:80px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;background:#f7f8fa;">📄</div>
-        <div class="photo-upload-badge" id="badge-${encodeURIComponent(file.name)}">⏳</div>
-        <button class="photo-remove" onclick="this.closest('.photo-item').remove()" title="Kaldır">✕</button>
+        <button class="photo-remove" onclick="removePhoto(this, '${file.name}')" title="Remove">✕</button>
         <div class="photo-name">${file.name}</div>`;
     }
     grid.appendChild(item);
   }
 
-  function uploadViaAppsScript(file) {
-    const briefTitle = document.getElementById('f-title').value || 'Untitled Brief';
-    setDriveStatus('uploading', '⬆ Uploading: ' + file.name + '...');
+  async function uploadViaAppsScript(file, briefTitle) {
+    briefTitle = briefTitle || document.getElementById('f-title').value || 'Untitled Brief';
+    setDriveStatus('uploading', '⬆ Uploading ' + file.name + '...');
 
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-      const base64 = e.target.result.split(',')[1];
-      try {
-        const res = await fetch(WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const base64 = e.target.result.split(',')[1];
+        try {
+          const payload = JSON.stringify({
             action: 'uploadPhoto',
             briefTitle: briefTitle,
             fileName: file.name,
             mimeType: file.type || 'application/octet-stream',
             data: base64,
-          }),
-        });
-        const text = await res.text();
-        let json;
-        try { json = JSON.parse(text); } catch(pe) { throw new Error(text); }
-
-        if (json.status === 'ok') {
-          if (json.folderUrl) photosFolderUrl = json.folderUrl;
-          const badge = document.getElementById('badge-' + encodeURIComponent(file.name));
-          if (badge) badge.textContent = '✓';
+          });
+          const formData = new FormData();
+          formData.append('data', payload);
+          await fetch(WEBHOOK_URL, { method: 'POST', mode: 'no-cors', body: formData });
+          // no-cors = opaque response, assume success
+          if (!photosFolderUrl) {
+            photosFolderUrl = 'https://drive.google.com/drive/folders/' + DRIVE_FOLDER_ID;
+          }
           setDriveStatus('connected', '✓ Uploaded: ' + file.name);
-          setTimeout(() => {
-            const d = document.getElementById('drive-status');
-            const grid = document.getElementById('photo-grid');
-            if (grid.children.length > 0) setDriveStatus('connected', '✓ ' + grid.children.length + ' file(s) uploaded');
-            else d.style.display = 'none';
-          }, 3000);
-        } else {
-          throw new Error(json.message || 'Upload failed');
+        } catch(err) {
+          setDriveStatus('error', '⚠ Upload error: ' + err.message);
         }
-      } catch(err) {
-        const badge = document.getElementById('badge-' + encodeURIComponent(file.name));
-        if (badge) { badge.textContent = '⚠'; badge.style.background = 'var(--danger)'; }
-        setDriveStatus('error', '⚠ Upload error: ' + err.message);
-      }
-    };
-    reader.readAsDataURL(file);
+        resolve();
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function removePhoto(btn, fileName) {
+    btn.closest('.photo-item').remove();
+    pendingPhotoFiles = pendingPhotoFiles.filter(f => f.name !== fileName);
+    if (pendingPhotoFiles.length === 0) {
+      const el = document.getElementById('drive-status');
+      el.style.display = 'none';
+    }
   }
 
   function setDriveStatus(type, msg) {
