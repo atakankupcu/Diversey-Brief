@@ -6,6 +6,8 @@
 <title>Diversey — Production Brief</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzA3MjYzNSIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwQ0M5OSIgc3Ryb2tlLXdpZHRoPSIyLjUiLz48bGluZSB4MT0iMTYiIHkxPSIxMSIgeDI9IjE2IiB5Mj0iMjEiIHN0cm9rZT0iIzAwQ0M5OSIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIxMSIgeTE9IjE2IiB4Mj0iMjEiIHkyPSIxNiIgc3Ryb2tlPSIjMDBDQzk5IiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://ucarecdn.com/libs/widget/3.x/uploadcare.full.min.js"></script>
+<script>UPLOADCARE_PUBLIC_KEY = '8bbf74f0c2d1c5bebac5'; UPLOADCARE_LOCALE = 'en';</script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -335,21 +337,13 @@
       </div>
     </div>
     <div class="section-body">
-      <p class="hint" style="margin-bottom:12px;">Upload reference photos, sketches or visuals. Files are saved automatically to Drive.</p>
+      <p class="hint" style="margin-bottom:12px;">Upload reference photos, sketches or visuals. Links are automatically saved with the brief.</p>
       <div class="photo-upload-wrap">
-        <div class="photo-dropzone" id="photo-dropzone"
-          ondragover="event.preventDefault();this.classList.add('drag-over')"
-          ondragleave="this.classList.remove('drag-over')"
-          ondrop="handleDrop(event)">
-          <input type="file" id="photo-input" multiple accept="image/*,video/*,.pdf"
-            onchange="handleFileSelect(this.files)">
-          <div class="photo-dropzone-icon">📎</div>
-          <div class="photo-dropzone-text">
-            <strong>Select files</strong> or drag &amp; drop here<br>
-            <span style="font-size:11px;">JPG, PNG, GIF, MP4, PDF — max 50MB per file</span>
-          </div>
-        </div>
-        <div class="photo-grid" id="photo-grid"></div>
+        <input type="hidden" role="uploadcare-uploader" id="uc-uploader"
+          data-multiple="true"
+          data-preview-step="true"
+          data-clearable="true">
+        <div id="uc-file-list" class="photo-grid" style="margin-top:10px;"></div>
       </div>
     </div>
   </div>
@@ -396,7 +390,7 @@
 <div id="toast"></div>
 
 <script>
-  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbyB7ZDOqmIhJz_BRiMEMO1ItdiJjRCIYoRuJFuoL4bbXLGXVvSnXMuw3YMRL9cfvQAUmQ/exec';
+  const WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbxVMV7mt9IcgU7nbtIhIWgUJi-nFchmw4oMWaY6Y7AH4_r9hXvXG1ClO3GIx4ONZU6oEQ/exec';
   const WEBHOOK_URL_GET = WEBHOOK_URL;
 
   let envCount = 0;
@@ -943,7 +937,7 @@
       characterType: document.getElementById('f-character').value,
       uniform: document.getElementById('f-uniform').value,
       environments,
-      ...(photosFolderUrl ? { photosFolder: photosFolderUrl } : {}),
+      ...(uploadedFileUrls.length > 0 ? { photoUrls: uploadedFileUrls } : {}),
       brandGuidelines: document.getElementById('f-brand').value,
       donts: document.getElementById('f-donts').value,
       safetyNotes: document.getElementById('f-safety').value,
@@ -978,22 +972,6 @@
 
     const btn = document.getElementById('submit-btn');
     btn.disabled = true;
-
-    // Encode pending photos as base64 and attach to brief data
-    if (pendingPhotoFiles.length > 0) {
-      btn.textContent = 'Reading photos…';
-      data.photos = [];
-      for (const file of pendingPhotoFiles) {
-        try {
-          const b64 = await fileToBase64(file);
-          data.photos.push({ name: file.name, mimeType: file.type || 'application/octet-stream', data: b64 });
-        } catch(e) {
-          console.warn('Could not read file:', file.name, e);
-        }
-      }
-      pendingPhotoFiles = [];
-    }
-
     btn.textContent = 'Submitting…';
     try {
       const formData = new FormData();
@@ -1005,15 +983,6 @@
       showToast('Submission failed — check your URL', true);
       btn.disabled = false; btn.textContent = 'Submit Brief';
     }
-  }
-
-  function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = e => resolve(e.target.result.split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
   }
 
   /* ─── Toast ─── */
@@ -1030,6 +999,8 @@
 
   /* ─── Init ─── */
   document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  // Init Uploadcare
+  initUploadcare();
   // Set avatar background images
   ['Zack','Zayn','Zeynep'].forEach(name => {
     const card = document.getElementById('char-' + name);
@@ -1038,114 +1009,31 @@
   addEnv();
   addScene(1);
 
-  /* ─── Photo handling ─── */
-  const DRIVE_FOLDER_ID = '1_p-vboDrA6ZZmeCcFpwnnBbfKJRiP04p';
-  let photosFolderUrl = '';
+  /* ─── Uploadcare ─── */
+  let uploadedFileUrls = [];
 
-  function handleDrop(e) {
-    e.preventDefault();
-    document.getElementById('photo-dropzone').classList.remove('drag-over');
-    handleFileSelect(e.dataTransfer.files);
-  }
-
-  let pendingPhotoFiles = []; // files queued for upload on submit
-
-  function handleFileSelect(files) {
-    Array.from(files).forEach(file => {
-      if (file.size > 50 * 1024 * 1024) {
-        showToast('⚠ ' + file.name + ' exceeds the 50MB limit', true);
-        return;
-      }
-      addPhotoThumb(file);
-      pendingPhotoFiles.push(file);
-    });
-  }
-
-  function addPhotoThumb(file) {
-    const grid = document.getElementById('photo-grid');
-    const item = document.createElement('div');
-    item.className = 'photo-item';
-    item.id = 'photo-' + encodeURIComponent(file.name);
-
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = e => {
-        item.innerHTML = `
-          <img src="${e.target.result}" alt="${file.name}">
-          <button class="photo-remove" onclick="removePhoto(this, '${file.name}')" title="Remove">✕</button>
-          <div class="photo-name">${file.name}</div>`;
-      };
-      reader.readAsDataURL(file);
-    } else {
-      item.innerHTML = `
-        <div style="width:80px;height:80px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;background:#f7f8fa;">📄</div>
-        <button class="photo-remove" onclick="removePhoto(this, '${file.name}')" title="Remove">✕</button>
-        <div class="photo-name">${file.name}</div>`;
-    }
-    grid.appendChild(item);
-  }
-
-  async function uploadViaAppsScript(file, briefTitle) {
-    briefTitle = briefTitle || document.getElementById('f-title').value || 'Untitled Brief';
-    setDriveStatus('uploading', '⬆ Uploading ' + file.name + '...');
-
-    // Apps Script payload limit ~50MB; base64 is ~33% larger than binary
-    if (file.size > 30 * 1024 * 1024) {
-      setDriveStatus('error', '⚠ ' + file.name + ' is too large (max ~30MB)');
-      return;
-    }
-
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = async function(e) {
-        // Split base64 off the data URL prefix
-        const dataUrl = e.target.result;
-        const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
-        try {
-          const payload = JSON.stringify({
-            action: 'uploadPhoto',
-            briefTitle: briefTitle,
-            fileName: file.name,
-            mimeType: file.type || 'application/octet-stream',
-            data: base64,
+  function initUploadcare() {
+    const widget = uploadcare.Widget('#uc-uploader');
+    widget.onChange(function(group) {
+      uploadedFileUrls = [];
+      const list = document.getElementById('uc-file-list');
+      list.innerHTML = '';
+      if (!group) return;
+      group.promise().then(function(info) {
+        info.files().forEach(function(filePromise) {
+          filePromise.then(function(fileInfo) {
+            uploadedFileUrls.push(fileInfo.cdnUrl);
+            const item = document.createElement('div');
+            item.className = 'photo-item';
+            const isImg = fileInfo.mimeType && fileInfo.mimeType.startsWith('image/');
+            item.innerHTML = isImg
+              ? `<img src="${fileInfo.cdnUrl}-/scale_crop/80x80/center/" alt="${fileInfo.name}"><div class="photo-name">${fileInfo.name}</div>`
+              : `<div style="width:80px;height:80px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;background:#f7f8fa;">📄</div><div class="photo-name">${fileInfo.name}</div>`;
+            list.appendChild(item);
           });
-          const formData = new FormData();
-          formData.append('data', payload);
-          // no-cors required for Apps Script — response is opaque (always looks like success)
-          await fetch(WEBHOOK_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: formData,
-          });
-          if (!photosFolderUrl) {
-            photosFolderUrl = 'https://drive.google.com/drive/folders/' + DRIVE_FOLDER_ID;
-          }
-          setDriveStatus('connected', '✓ Uploaded: ' + file.name);
-        } catch(err) {
-          // "Failed to fetch" usually means Apps Script is not deployed as "Anyone"
-          setDriveStatus('error', '⚠ Upload failed. Check Apps Script deployment (set access to Anyone).');
-          console.error('Upload error:', err);
-        }
-        resolve();
-      };
-      reader.onerror = () => { setDriveStatus('error', '⚠ Could not read file.'); resolve(); };
-      reader.readAsDataURL(file);
+        });
+      });
     });
-  }
-
-  function removePhoto(btn, fileName) {
-    btn.closest('.photo-item').remove();
-    pendingPhotoFiles = pendingPhotoFiles.filter(f => f.name !== fileName);
-    if (pendingPhotoFiles.length === 0) {
-      const el = document.getElementById('drive-status');
-      el.style.display = 'none';
-    }
-  }
-
-  function setDriveStatus(type, msg) {
-    const el = document.getElementById('drive-status');
-    el.className = 'drive-status ' + type;
-    el.textContent = msg;
   }
 
   async function loadFormData() {
