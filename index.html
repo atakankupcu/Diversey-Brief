@@ -1028,61 +1028,30 @@
   /* ─── Uploadcare ─── */
   let ucWidget = null;
 
+  let collectedUrls = [];
+
   function initUploadcare() {
     ucWidget = uploadcare.Widget('#uc-uploader');
-    ucWidget.onChange(function(group) {
-      const list = document.getElementById('uc-file-list');
-      list.innerHTML = '';
-      if (!group) return;
-      group.promise().then(function(info) {
-        info.files().forEach(function(filePromise) {
-          filePromise.then(function(fileInfo) {
-            const item = document.createElement('div');
-            item.className = 'photo-item';
-            const isImg = fileInfo.mimeType && fileInfo.mimeType.startsWith('image/');
-            item.innerHTML = isImg
-              ? '<img src="' + fileInfo.cdnUrl + '-/scale_crop/80x80/center/" alt="' + fileInfo.name + '"><div class="photo-name">' + fileInfo.name + '</div>'
-              : '<div style="width:80px;height:80px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;background:#f7f8fa;">📄</div><div class="photo-name">' + fileInfo.name + '</div>';
-            list.appendChild(item);
-          });
-        });
-      });
+    ucWidget.onUploadComplete(function(fileInfo) {
+      if (fileInfo && fileInfo.cdnUrl) {
+        collectedUrls.push(fileInfo.cdnUrl);
+        const list = document.getElementById('uc-file-list');
+        const item = document.createElement('div');
+        item.className = 'photo-item';
+        const isImg = fileInfo.mimeType && fileInfo.mimeType.startsWith('image/');
+        item.innerHTML = isImg
+          ? '<img src="' + fileInfo.cdnUrl + '-/scale_crop/80x80/center/" alt="' + fileInfo.name + '"><div class="photo-name">' + fileInfo.name + '</div>'
+          : '<div style="width:80px;height:80px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;background:#f7f8fa;">📄</div><div class="photo-name">' + fileInfo.name + '</div>';
+        list.appendChild(item);
+      }
+    });
+    ucWidget.onChange(function(val) {
+      if (!val) { collectedUrls = []; document.getElementById('uc-file-list').innerHTML = ''; }
     });
   }
 
   function getUploadedUrls() {
-    return new Promise(function(resolve) {
-      if (!ucWidget) { console.log('UC: no widget'); resolve([]); return; }
-      const val = ucWidget.value();
-      console.log('UC value:', val);
-      if (!val) { console.log('UC: no value'); resolve([]); return; }
-
-      // val can be a FileGroup (multiple) or a single FileInfo promise
-      const promise = val.promise ? val.promise() : val;
-      promise.then(function(info) {
-        console.log('UC info:', info);
-        // Group has .files(), single file does not
-        if (info.files && typeof info.files === 'function') {
-          const files = info.files();
-          if (!files.length) { resolve([]); return; }
-          const urls = [];
-          let done = 0;
-          files.forEach(function(fp) {
-            fp.then(function(fi) {
-              if (fi.cdnUrl) urls.push(fi.cdnUrl);
-            }).catch(function(){}).finally(function() {
-              done++;
-              if (done === files.length) resolve(urls);
-            });
-          });
-        } else if (info.cdnUrl) {
-          // Single file
-          resolve([info.cdnUrl]);
-        } else {
-          resolve([]);
-        }
-      }).catch(function(err) { console.log('UC error:', err); resolve([]); });
-    });
+    return Promise.resolve(collectedUrls);
   }
 
   async function loadFormData() {
